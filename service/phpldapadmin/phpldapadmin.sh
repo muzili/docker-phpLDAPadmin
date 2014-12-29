@@ -28,19 +28,24 @@ getBaseDn () {
 # a ldap container is linked to this phpLDAPadmin container
 if [ -n "${LDAP_NAME}" ]; then
   LDAP_HOST=${LDAP_PORT_389_TCP_ADDR}
-  
+
   # Get base dn from ldap domain
-  getBaseDn ${LDAP_ENV_LDAP_DOMAIN}
+  getBaseDn ${LDAP_ENV_SLAPD_DOMAIN}
 
   LDAP_BASE_DN=$baseDn
   LDAP_LOGIN_DN="cn=admin,$baseDn"
-  LDAP_SERVER_NAME=${LDAP_ENV_LDAP_ORGANISATION}
+  LDAP_SERVER_NAME=${LDAP_ENV_SLAPD_ORG}
 else
   LDAP_HOST=${LDAP_HOST}
   LDAP_BASE_DN=${LDAP_BASE_DN}
   LDAP_LOGIN_DN=${LDAP_LOGIN_DN}
   LDAP_SERVER_NAME=${LDAP_SERVER_NAME}
 fi
+
+echo "LDAP_HOST = $LDAP_HOST"
+echo "LDAP_BASE_DN = $LDAP_BASE_DN"
+echo "LDAP_LOGIN_DN = $LDAP_LOGIN_DN"
+echo "LDAP_SERVER_NAME = $LDAP_SERVER_NAME"
 
 PHPLDAPADMIN_SSL_CRT_FILENAME=${PHPLDAPADMIN_SSL_CRT_FILENAME}
 PHPLDAPADMIN_SSL_KEY_FILENAME=${PHPLDAPADMIN_SSL_KEY_FILENAME}
@@ -62,7 +67,6 @@ if [ ! -e /etc/phpldapadmin/docker_bootstrapped ]; then
   sed -i "s/'127.0.0.1'/'${LDAP_HOST}'/g" /etc/phpldapadmin/config.php
   sed -i "s/'dc=example,dc=com'/'${LDAP_BASE_DN}'/g" /etc/phpldapadmin/config.php
   sed -i "s/'cn=admin,dc=example,dc=com'/'${LDAP_LOGIN_DN}'/g" /etc/phpldapadmin/config.php
-  sed -i "s/'server','base',array('')/'server','base',array('cn=config','${LDAP_BASE_DN}')/" /etc/phpldapadmin/config.php
   sed -i "s/'My LDAP Server'/'${LDAP_SERVER_NAME}'/g" /etc/phpldapadmin/config.php
 
   # Fix the bug with password_hash
