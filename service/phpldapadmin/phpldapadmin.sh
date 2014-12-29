@@ -62,6 +62,7 @@ if [ ! -e /etc/phpldapadmin/docker_bootstrapped ]; then
   sed -i "s/'127.0.0.1'/'${LDAP_HOST}'/g" /etc/phpldapadmin/config.php
   sed -i "s/'dc=example,dc=com'/'${LDAP_BASE_DN}'/g" /etc/phpldapadmin/config.php
   sed -i "s/'cn=admin,dc=example,dc=com'/'${LDAP_LOGIN_DN}'/g" /etc/phpldapadmin/config.php
+  sed -i "s/'server','base',array('')/'server','base',array('cn=config','${LDAP_BASE_DN}')/" /etc/phpldapadmin/config.php
   sed -i "s/'My LDAP Server'/'${LDAP_SERVER_NAME}'/g" /etc/phpldapadmin/config.php
 
   # Fix the bug with password_hash
