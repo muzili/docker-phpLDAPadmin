@@ -26,7 +26,8 @@ RUN apt-get -y update && \
     apt-get install -y php5-fpm nginx && \
     apt-get install -y --no-install-recommends phpldapadmin
 
-
+#Set the volume
+VOLUME ["/var/log"]
 # Expose http and https default ports
 EXPOSE 80 443
 

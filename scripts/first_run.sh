@@ -1,4 +1,5 @@
 pre_start_action() {
+    mkdir -p $LOG_DIR
 
     echo "configuring LDAP for first run"
     # phpLDAPadmin config
@@ -42,17 +43,17 @@ server {
   add_header X-Content-Type-Options nosniff;
 
   # logging
-  error_log /var/log/nginx/error.log;
-  access_log /var/log/nginx/access.log;
+  error_log $LOG_DIR/nginx/error.log;
+  access_log $LOG_DIR/nginx/access.log;
 }
 EOF
-    mkdir -p /var/log/nginx
+    mkdir -p $LOG_DIR/nginx
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj "/C=CN/ST=SH/L=SHANGHAI/O=MoreTV/OU=Helios/CN=muzili@gmail.com"  -keyout /etc/nginx/ssl/phpldapadmin.key -out /etc/nginx/ssl/phpldapadmin.crt
 
     cat > /etc/php-fpm.conf <<EOF
 [global]
 pid = /run/php-fpm/php-fpm.pid
-error_log = /var/log/php-fpm/error.log
+error_log = $LOG_DIR/php-fpm/error.log
 daemonize = no
 [www]
 user = nginx
@@ -67,7 +68,7 @@ pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 4
 catch_workers_output = yes
-php_admin_value[error_log] = /var/log/php-fpm/phabricator.php.log
+php_admin_value[error_log] = $LOG_DIR/php-fpm/phabricator.php.log
 php_admin_value[sendmail_path] = /usr/bin/msmtp -t -C /etc/msmtprc
 EOF
     touch /etc/msmtprc
@@ -97,7 +98,7 @@ EOF
 file=/run/supervisor.sock   ; (the path to the socket file)
 
 [supervisord]
-logfile=/var/log/supervisor/supervisord.log ; (main log file;default $CWD/supervisord.log)
+logfile=$LOG_DIR/supervisor/supervisord.log ; (main log file;default $CWD/supervisord.log)
 logfile_maxbytes=50MB       ; (max main logfile bytes b4 rotation;default 50MB)
 logfile_backups=10          ; (num of main logfile rotation backups;default 10)
 loglevel=info               ; (log level;default info; others: debug,warn,trace)
