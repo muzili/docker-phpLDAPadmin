@@ -118,7 +118,7 @@ files = /etc/supervisor/conf.d/*.conf
 EOF
     cat > /etc/supervisor/conf.d/ldapadmin.conf <<-EOF
 [program:php5-fpm]
-command=/usr/sbin/php-fpm --nodaemonize
+command=/usr/sbin/php5-fpm --nodaemonize
 
 [program:nginx]
 command=/usr/sbin/nginx
