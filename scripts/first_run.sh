@@ -14,23 +14,13 @@ pre_start_action() {
     # Hide template warnings
     sed -i "s:// \$config->custom->appearance\['hide_template_warning'\] = false;:\$config->custom->appearance\[\'hide_template_warning\'\] = true;:g" /etc/phpldapadmin/config.php
 
+    rm -rf /etc/nginx/sites-enabled/*
     cat >/etc/nginx/sites-enabled/phpldapadmin.conf <<EOF
 ## This is a normal HTTP host which redirects all traffic to the HTTPS host.
-
-
 server {
-  listen *:80;
+  listen 80;
+  listen 443;
   server_name  $LDAPADMIN_SERVER_NAME;
-  root /usr/share/phpldapadmin/htdocs;
-  index index.html index.htm index.php;
-}
-
-server {
-  listen 443 ssl spdy;
-  listen [::]:443 ssl spdy;
-
-  server_name  $LDAPADMIN_SERVER_NAME;
-
   root /usr/share/phpldapadmin/htdocs;
   index index.html index.htm index.php;
 
@@ -50,12 +40,15 @@ server {
   add_header Strict-Transport-Security max-age=63072000;
   add_header X-Frame-Options DENY;
   add_header X-Content-Type-Options nosniff;
+
+  # logging
+  error_log /var/log/nginx/error.log;
+  access_log /var/log/nginx/access.log;
 }
 EOF
+    mkdir -p /var/log/nginx
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj "/C=CN/ST=SH/L=SHANGHAI/O=MoreTV/OU=Helios/CN=muzili@gmail.com"  -keyout /etc/nginx/ssl/phpldapadmin.key -out /etc/nginx/ssl/phpldapadmin.crt
 
-    #  mkdir -p /run/php-fpm
-    #  chown git:wwwgrp-phabricator /run/php-fpm
     cat > /etc/php-fpm.conf <<EOF
 [global]
 pid = /run/php-fpm/php-fpm.pid

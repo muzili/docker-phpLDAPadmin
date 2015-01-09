@@ -1,4 +1,4 @@
-FROM muzili/centos-php
+FROM ubuntu:14.04
 MAINTAINER Joshua Lee <muzili@gmail.com>
 
 # Default configuration: can be overridden at the docker command line
@@ -18,8 +18,14 @@ ENV LDAP_TLS_CA_NAME ca.crt
 # Add scripts
 ADD scripts /scripts
 
-# Resynchronize the package index files from their sources
-RUN yum install -y phpldapadmin.noarch
+# Some Docker-specific settings
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get -y update && \
+    apt-get -y dist-upgrade && \
+    apt-get install -y php5-fpm nginx && \
+    apt-get install -y --no-install-recommends phpldapadmin
+
 
 # Expose http and https default ports
 EXPOSE 80 443
