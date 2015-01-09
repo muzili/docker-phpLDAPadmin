@@ -6,6 +6,7 @@ ENV LDAP_HOST 127.0.0.1
 ENV LDAP_BASE_DN dc=example,dc=com
 ENV LDAP_LOGIN_DN cn=admin,dc=example,dc=com
 ENV LDAP_SERVER_NAME docker.io phpLDAPadmin
+ENV LDAPADMIN_SERVER_NAME ldapadmin.example.com
 
 # phpLDAPadmin SSL certificat and private key filename
 ENV PHPLDAPADMIN_SSL_CRT_FILENAME phpldapadmin.crt
