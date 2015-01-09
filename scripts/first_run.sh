@@ -20,10 +20,39 @@ pre_start_action() {
 ## This is a normal HTTP host which redirects all traffic to the HTTPS host.
 server {
   listen 80;
+  server_name  $LDAPADMIN_SERVER_NAME;
+  root /usr/share/phpldapadmin/htdocs;
+  index index.html index.htm index.php;
+
+  #pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+  location ~ \.php$ {
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+    #With php5-cgi alone:
+    #fastcgi_pass 127.0.0.1:9000;
+    #With php5-fpm:
+    fastcgi_pass unix:/var/run/php5-fpm.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+  }
+}
+server {
   listen 443;
   server_name  $LDAPADMIN_SERVER_NAME;
   root /usr/share/phpldapadmin/htdocs;
   index index.html index.htm index.php;
+
+  #pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+  location ~ \.php$ {
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+    #With php5-cgi alone:
+    #fastcgi_pass 127.0.0.1:9000;
+    #With php5-fpm:
+    fastcgi_pass unix:/var/run/php5-fpm.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+  }
 
   ## SSL Security
   ## https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
