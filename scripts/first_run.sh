@@ -48,6 +48,7 @@ server {
 }
 EOF
     mkdir -p $LOG_DIR/nginx
+    mkdir -p /etc/nginx/ssl
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj "/C=CN/ST=SH/L=SHANGHAI/O=MoreTV/OU=Helios/CN=muzili@gmail.com"  -keyout /etc/nginx/ssl/phpldapadmin.key -out /etc/nginx/ssl/phpldapadmin.crt
 
     cat > /etc/php-fpm.conf <<EOF
