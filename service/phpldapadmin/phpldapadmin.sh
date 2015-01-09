@@ -7,55 +7,24 @@ status () {
   echo "---> ${@}" >&2
 }
 
-getBaseDn () {
-  IFS="."
-  export IFS
-
-  domain=$1
-  init=1
-
-  for s in $domain; do
-    dc="dc=$s"
-    if [ "$init" -eq 1 ]; then
-      baseDn=$dc
-      init=0
-    else
-      baseDn="$baseDn,$dc" 
-    fi
-  done
-}
-
-# a ldap container is linked to this phpLDAPadmin container
-if [ -n "${LDAP_NAME}" ]; then
-  LDAP_HOST=${LDAP_PORT_389_TCP_ADDR}
-
-  # Get base dn from ldap domain
-  getBaseDn ${LDAP_ENV_SLAPD_DOMAIN}
-
-  LDAP_BASE_DN=$baseDn
-  LDAP_LOGIN_DN="cn=admin,$baseDn"
-  LDAP_SERVER_NAME=${LDAP_ENV_SLAPD_ORG}
-else
-  LDAP_HOST=${LDAP_HOST}
-  LDAP_BASE_DN=${LDAP_BASE_DN}
-  LDAP_LOGIN_DN=${LDAP_LOGIN_DN}
-  LDAP_SERVER_NAME=${LDAP_SERVER_NAME}
-fi
+LDAP_HOST="${LDAP_HOST}"
+LDAP_BASE_DN="${LDAP_BASE_DN}"
+LDAP_LOGIN_DN="${LDAP_LOGIN_DN}"
+LDAP_SERVER_NAME="${LDAP_SERVER_NAME}"
 
 echo "LDAP_HOST = $LDAP_HOST"
 echo "LDAP_BASE_DN = $LDAP_BASE_DN"
 echo "LDAP_LOGIN_DN = $LDAP_LOGIN_DN"
 echo "LDAP_SERVER_NAME = $LDAP_SERVER_NAME"
+echo "LDAP_TLS_CA_NAME = ${LDAP_TLS_CA_NAME}"
 
 PHPLDAPADMIN_SSL_CRT_FILENAME=${PHPLDAPADMIN_SSL_CRT_FILENAME}
 PHPLDAPADMIN_SSL_KEY_FILENAME=${PHPLDAPADMIN_SSL_KEY_FILENAME}
 
-LDAP_TLS_CA_NAME=${LDAP_TLS_CA_NAME}
-
 if [ ! -e /etc/phpldapadmin/docker_bootstrapped ]; then
   status "configuring LDAP for first run"
 
-  if [ -e /etc/ldap/ssl/$LDAP_TLS_CA_NAME ]; then
+  if [ -e /etc/ldap/ssl/ca.crt ]; then
     # LDAP  CA
     sed -i "s/TLS_CACERT.*/TLS_CACERT       \/etc\/ldap\/ssl\/ca.crt/g" /etc/ldap/ldap.conf
     sed -i '/TLS_CACERT/a\TLS_CIPHER_SUITE        HIGH:MEDIUM:+SSLv3' /etc/ldap/ldap.conf
@@ -76,11 +45,53 @@ if [ ! -e /etc/phpldapadmin/docker_bootstrapped ]; then
   # Hide template warnings
   sed -i "s:// \$config->custom->appearance\['hide_template_warning'\] = false;:\$config->custom->appearance\[\'hide_template_warning\'\] = true;:g" /etc/phpldapadmin/config.php
 
-  # nginx config (tools from osixia/baseimage)
-  /sbin/nginx-add-vhost ldapadmin /usr/share/phpldapadmin/htdocs $LDAPADMIN_SERVER_NAME --php --ssl --ssl-crt=/etc/nginx/ssl/$PHPLDAPADMIN_SSL_CRT_FILENAME --ssl-key=/etc/nginx/ssl/$PHPLDAPADMIN_SSL_KEY_FILENAME
-  /sbin/nginx-remove-vhost default
+  rm /etc/nginx/sites-enabled/*
+  cat >/etc/nginx/sites-enabled/phpldapadmin.conf <<EOF
+## This is a normal HTTP host which redirects all traffic to the HTTPS host.
+location ~ \.php$ {
+   fastcgi_split_path_info ^(.+\.php)(/.+)$;
+   # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
 
+   fastcgi_pass unix:/var/run/php5-fpm.sock;
+   fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+   fastcgi_index index.php;
+   include fastcgi_params;
+}
+
+
+server {
+  listen *:80;
+  server_name  $LDAPADMIN_SERVER_NAME;
+  root /usr/share/phpldapadmin/htdocs;
+  index index.html index.htm index.php;
+}
+
+server {
+  listen 443 ssl spdy;
+  listen [::]:443 ssl spdy;
+
+  server_name  $LDAPADMIN_SERVER_NAME;
+
+  root /usr/share/phpldapadmin/htdocs;
+  index index.html index.htm index.php;
+
+  ## SSL Security
+  ## https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
+  ssl on;
+  ssl_certificate /etc/nginx/ssl/phpldapadmin.crt;
+  ssl_certificate_key /etc/nginx/ssl/phpldapadmin.key;
+
+  ssl_ciphers 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:AES256-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4';
+
+  ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
+  ssl_session_cache  builtin:1000  shared:SSL:10m;
+
+  ssl_prefer_server_ciphers   on;
+
+  add_header Strict-Transport-Security max-age=63072000;
+  add_header X-Frame-Options DENY;
+  add_header X-Content-Type-Options nosniff;
+}
+EOF
+  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj "/C=CN/ST=SH/L=SHANGHAI/O=MoreTV/OU=Helios/CN=muzili@gmail.com"  -keyout /etc/nginx/ssl/phpldapadmin.key -out /etc/nginx/ssl/phpldapadmin.crt
   touch /etc/phpldapadmin/docker_bootstrapped
-else
-  status "found already-configured phpLDAPadmin"
-fi

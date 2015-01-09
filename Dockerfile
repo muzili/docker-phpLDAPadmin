@@ -5,7 +5,7 @@ MAINTAINER Bertrand Gouny <bertrand.gouny@osixia.net>
 ENV LDAP_HOST 127.0.0.1
 ENV LDAP_BASE_DN dc=example,dc=com
 ENV LDAP_LOGIN_DN cn=admin,dc=example,dc=com
-ENV LDAP_SERVER_NAME docker.io phpLDAPadmin
+ENV LDAP_SERVER_NAME ldap.example.com
 ENV LDAPADMIN_SERVER_NAME ldapadmin.example.com
 
 # phpLDAPadmin SSL certificat and private key filename
