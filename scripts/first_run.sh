@@ -19,7 +19,6 @@ pre_start_action() {
     cat >/etc/nginx/sites-enabled/phpldapadmin.conf <<EOF
 ## This is a normal HTTP host which redirects all traffic to the HTTPS host.
 server {
-  listen 80;
   server_name  $LDAPADMIN_SERVER_NAME;
   root /usr/share/phpldapadmin/htdocs;
   index index.html index.htm index.php;
@@ -37,7 +36,7 @@ server {
   }
 }
 server {
-  listen 443;
+  listen 443 ssl;
   server_name  $LDAPADMIN_SERVER_NAME;
   root /usr/share/phpldapadmin/htdocs;
   index index.html index.htm index.php;
