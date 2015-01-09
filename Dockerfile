@@ -23,7 +23,7 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get -y update && \
     apt-get -y dist-upgrade && \
-    apt-get install -y php5-fpm nginx && \
+    apt-get install -y php5-fpm nginx supervisor && \
     apt-get install -y --no-install-recommends phpldapadmin
 
 #Set the volume
