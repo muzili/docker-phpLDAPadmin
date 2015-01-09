@@ -24,7 +24,8 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get -y update && \
     apt-get -y dist-upgrade && \
     apt-get install -y php5-fpm nginx supervisor && \
-    apt-get install -y --no-install-recommends phpldapadmin
+    apt-get install -y --no-install-recommends phpldapadmin && \
+    touch /first_run
 
 #Set the volume
 VOLUME ["/var/log"]
