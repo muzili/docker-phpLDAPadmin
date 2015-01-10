@@ -80,6 +80,72 @@ EOF
     mkdir -p /etc/nginx/ssl
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj "/C=CN/ST=SH/L=SHANGHAI/O=MoreTV/OU=Helios/CN=muzili@gmail.com"  -keyout /etc/nginx/ssl/phpldapadmin.key -out /etc/nginx/ssl/phpldapadmin.crt
 
+    wget http://tools.ltb-project.org/attachments/download/497/ltb-project-self-service-password-0.8.tar.gz -O /tmp/self-service-password.tar.gz
+    mkdir -p /usr/share/self-service-password
+    tar  --strip-components=1 -zxvf ltb-project-self-service-password-0.8.tar.gz -C /usr/share/self-service-password
+    cat >> /etc/nginx/sites-enabled/ssp.conf <<EOF
+## This is a normal HTTP host which redirects all traffic to the HTTPS host.
+server {
+  server_name  $LDAPSSP_SERVER_NAME;
+  root /usr/share/self-service-password;
+  index index.html index.htm index.php;
+
+  #pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+  location ~ \.php$ {
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+    #With php5-cgi alone:
+    #fastcgi_pass 127.0.0.1:9000;
+    #With php5-fpm:
+    fastcgi_pass unix:/var/run/php5-fpm.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+  }
+}
+server {
+  listen 443 ssl;
+  server_name  $LDAPSSP_SERVER_NAME;
+  root /usr/share/self-service-password;
+  index index.html index.htm index.php;
+
+  #pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+  location ~ \.php$ {
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+    #With php5-cgi alone:
+    #fastcgi_pass 127.0.0.1:9000;
+    #With php5-fpm:
+    fastcgi_pass unix:/var/run/php5-fpm.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+  }
+
+  ## SSL Security
+  ## https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
+  ssl on;
+  ssl_certificate /etc/nginx/ssl/phpldapadmin.crt;
+  ssl_certificate_key /etc/nginx/ssl/phpldapadmin.key;
+
+  ssl_ciphers 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:AES256-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4';
+
+  ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
+  ssl_session_cache  builtin:1000  shared:SSL:10m;
+
+  ssl_prefer_server_ciphers   on;
+
+  add_header Strict-Transport-Security max-age=63072000;
+  add_header X-Frame-Options DENY;
+  add_header X-Content-Type-Options nosniff;
+
+  # logging
+  error_log $LOG_DIR/nginx/error.log;
+  access_log $LOG_DIR/nginx/access.log;
+}
+EOF
+    sed -i -e's/localhost/$LDAP_HOST/g' -e's/cn=manager,dc=example,dc=com/$LDAP_LOGIN_DN/g' \
+        -e's/secret/$LDAP_ENV_SLAPD_PASSWORD/g' -e 's/dc=example,dc=com/$LDAP_BASE_DN/g' \
+        -e's/person/account/g' /usr/share/self-service-password/conf/config.inc.php
+
     cat > /etc/php-fpm.conf <<EOF
 [global]
 pid = /run/php-fpm/php-fpm.pid
