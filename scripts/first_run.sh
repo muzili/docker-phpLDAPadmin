@@ -82,7 +82,7 @@ EOF
 
     wget http://tools.ltb-project.org/attachments/download/497/ltb-project-self-service-password-0.8.tar.gz -O /tmp/self-service-password.tar.gz
     mkdir -p /usr/share/self-service-password
-    tar  --strip-components=1 -zxvf ltb-project-self-service-password-0.8.tar.gz -C /usr/share/self-service-password
+    tar  --strip-components=1 -zxvf /tmp/self-service-password.tar.gz -C /usr/share/self-service-password
     cat >> /etc/nginx/sites-enabled/ssp.conf <<EOF
 ## This is a normal HTTP host which redirects all traffic to the HTTPS host.
 server {
