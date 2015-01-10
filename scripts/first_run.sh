@@ -15,7 +15,7 @@ pre_start_action() {
     # Hide template warnings
     sed -i "s:// \$config->custom->appearance\['hide_template_warning'\] = false;:\$config->custom->appearance\[\'hide_template_warning\'\] = true;:g" /etc/phpldapadmin/config.php
 
-    cat >/etc/nginx/sites-enabled/phpldapadmin.conf <<EOF
+    cat >> /etc/nginx/sites-enabled/default <<EOF
 ## This is a normal HTTP host which redirects all traffic to the HTTPS host.
 server {
   server_name  $LDAPADMIN_SERVER_NAME;
