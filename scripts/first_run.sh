@@ -144,7 +144,7 @@ server {
 EOF
     sed -i -e"s/localhost/${LDAP_HOST}/g" -e"s/cn=manager,dc=example,dc=com/${LDAP_LOGIN_DN}/g" \
         -e"s/secret/$LDAP_ENV_SLAPD_PASSWORD/g" -e "s/dc=example,dc=com/$LDAP_BASE_DN/g" \
-        -e"s/person/account/g" /usr/share/self-service-password/conf/config.inc.php
+        -e"s/person/inetOrgPerson/g" /usr/share/self-service-password/conf/config.inc.php
 
     cat > /etc/php-fpm.conf <<EOF
 [global]
