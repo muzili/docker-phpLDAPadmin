@@ -7,6 +7,7 @@ pre_start_action() {
     sed -i "s/'dc=example,dc=com'/'${LDAP_BASE_DN}'/g" /etc/phpldapadmin/config.php
     sed -i "s/'cn=admin,dc=example,dc=com'/'${LDAP_LOGIN_DN}'/g" /etc/phpldapadmin/config.php
     sed -i "s/'My LDAP Server'/'${LDAP_SERVER_NAME}'/g" /etc/phpldapadmin/config.php
+    sed -i -e's#// \$config->custom->modify_member#$config->custom->modify_member#' /etc/phpldapadmin/config.php
 
     # Fix the bug with password_hash
     # See http://stackoverflow.com/questions/20673186/getting-error-for-setting-password-feild-when-creating-generic-user-account-phpl
