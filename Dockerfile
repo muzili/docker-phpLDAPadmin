@@ -26,6 +26,7 @@ RUN apt-get -y update && \
     apt-get -y install ca-certificates openssl wget && \
     apt-get install -y php5-fpm php5-mcrypt nginx supervisor && \
     apt-get install -y --no-install-recommends phpldapadmin && \
+    php5enmod mcrypt && \
     touch /first_run
 
 #Set the volume
